@@ -1,6 +1,8 @@
 DROP DATABASE IF EXISTS accord;
 CREATE DATABASE accord;
 USE accord;
+GRANT ALL PRIVILEGES ON Accord TO 'ec2-user'@'localhost';
+GRANT ALL PRIVILEGES ON Accord TO 'sman'@'localhost';
 
 CREATE TABLE people (
     LastName VARCHAR(25),

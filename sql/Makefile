@@ -3,10 +3,15 @@ all: clean
 	mysql <dir.sql >dbcreate.log 2>&1
 
 clean:
-	rm -f initpeople.sql peopledata.csv dbcreate.log
+	rm -f initpeople.sql dbcreate.log
 
 backupdb:
-	mysqldump accord > accord_db.sql
+	mysqldump accord > testdb.sql
 
 restoredb:
-	./restoredb.sh test_db.sql
+	./restoreMySQLdb.sh accord testdb.sql
+
+install:
+	cp restoreMySQLdb.sh /usr/local/accord/testtools/
+	@echo "NOTICE:  STILL NEED TO RUN the Accord packager and publisher"
+
