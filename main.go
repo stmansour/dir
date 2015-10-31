@@ -217,4 +217,5 @@ func main() {
 	fixHealthInsurance(db)
 	fixDentalInsurance(db)
 	fix401K(db)
+	UpdateJobTitles(db)
 }

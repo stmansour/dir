@@ -65,19 +65,22 @@ CREATE TABLE departments (
 );
 
 CREATE TABLE companies (
-    cocode MEDIUMINT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(25),
-    address VARCHAR(35),
-    address2 VARCHAR(25),
-    city VARCHAR(25),
-    state CHAR(2),
-    postalcode varchar(10),
-    designation char(3),
-    country VARCHAR(25),
+    CoCode MEDIUMINT NOT NULL AUTO_INCREMENT,
+    LegalName VARCHAR(50),
+    CommonName VARCHAR(50),
+    Address VARCHAR(35),
+    Address2 VARCHAR(35),
+    City VARCHAR(25),
+    State CHAR(25),
+    PostalCode varchar(10),
+    Country VARCHAR(25),
     Phone VARCHAR(25),
     Fax VARCHAR(25),
     Email VARCHAR(35),
-    PRIMARY KEY (cocode)
+    Designation CHAR(3) NOT NULL,
+    Active SMALLINT NOT NULL,
+    EmploysPersonnel SMALLINT NOT NULL,
+    PRIMARY KEY (CoCode)
 );
 
 CREATE TABLE compensation (

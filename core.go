@@ -3,11 +3,18 @@ package main
 import (
 	"bufio"
 	"database/sql"
+	"encoding/csv"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 )
+
+type aJobTitle struct {
+	JobCode  int
+	Title    string
+	DeptCode int
+}
 
 func createDeductionsList(db *sql.DB) {
 	Insrt, err := db.Prepare("INSERT INTO DeductionList (dcode,name) VALUES(?,?)")
@@ -133,6 +140,101 @@ func CreateJobTitlesTable(db *sql.DB) {
 	errcheck(err)
 	_, err = RemoveTitleCol.Exec()
 	errcheck(err)
+}
+
+func getJobInfo(db *sql.DB, jobcode int, job *aJobTitle) {
+	job.DeptCode = 0
+	job.Title = ""
+	rows, err := db.Query("select jobcode,title,DeptCode from jobtitles where jobcode=?", jobcode)
+	errcheck(err)
+	defer rows.Close()
+	for rows.Next() {
+		errcheck(rows.Scan(&job.JobCode, &job.Title, &job.DeptCode))
+	}
+	if "" == job.Title {
+		fmt.Printf("Cound not find job title for jobcode = %d\n", jobcode)
+	}
+}
+
+func getJobInfoByTitle(db *sql.DB, title string, job *aJobTitle) {
+	m := 0
+	job.JobCode = 0
+	job.DeptCode = 0
+	job.Title = ""
+	rows, err := db.Query("select jobcode,title,DeptCode from jobtitles where title=?", title)
+	errcheck(err)
+	defer rows.Close()
+	for rows.Next() {
+		errcheck(rows.Scan(&job.JobCode, &job.Title, &job.DeptCode))
+		m++
+	}
+	if 0 == m {
+		fmt.Printf("Cound not find job title for title = %s\n", title)
+	}
+}
+
+// UpdateJobTitles reads the updated jobtitles that stacie sent me on Oct 30, 2015
+// and updates them into the database. The data is in the format jobtitle,fullName
+func UpdateJobTitles(db *sql.DB) {
+	jobtitles := "sql/UpdatedEmployeeTitles.csv"
+	f, err := os.Open(jobtitles)
+	errcheck(err)
+	defer f.Close()
+
+	var uid, jobcode int
+	var lastname, firstname string
+	var found bool
+	var job aJobTitle
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		// fmt.Printf("line:  %s\n", line)
+		jta := strings.Split(line, ",")
+		// fmt.Printf("jta[0] = %s    jta[1] = %s\n", jta[0], jta[1])
+		// which is in the format firstname " " lastname
+		nm := strings.Split(jta[1], " ")
+		// fmt.Printf("%s %s\n", nm[0], nm[1])
+		rows, err := db.Query("select uid,lastname,firstname,jobcode from people where firstname=? and lastname=?", nm[0], nm[1])
+		errcheck(err)
+		defer rows.Close()
+		found = false
+		for rows.Next() {
+			errcheck(rows.Scan(&uid, &lastname, &firstname, &jobcode))
+			found = true
+			// fmt.Printf("Found %s %s, jobcode = %d\n", firstname, lastname, jobcode)
+			if 0 == jobcode {
+				// try to find a match on title
+				// fmt.Printf("%s %s has jobcode 0.  Searching for match on job title %s\n", firstname, lastname, jta[0])
+				getJobInfoByTitle(db, jta[0], &job)
+				if job.JobCode > 0 {
+					// fmt.Printf("Found match, job code is %d, updating record for %s %s\n", job.JobCode, firstname, lastname)
+					update, err := db.Prepare("update people set jobcode=? where people.uid=?")
+					_, err = update.Exec(job.JobCode, uid)
+					if nil != err {
+						fmt.Printf("err updating people record: %v\n", err)
+					}
+				} else {
+					fmt.Printf("unable to find a job with title: %s\n", jta[0])
+				}
+			} else {
+				getJobInfo(db, jobcode, &job)
+				if job.Title != jta[0] {
+					// fmt.Printf("%d - %s %s : current title: %s  -  updated title: %s\n", uid, firstname, lastname, job.Title, jta[0])
+					getJobInfoByTitle(db, jta[0], &job)
+					update, err := db.Prepare("update people set jobcode=? where people.uid=?")
+					_, err = update.Exec(job.JobCode, uid)
+					if nil != err {
+						fmt.Printf("err updating people record: %v\n", err)
+					}
+				}
+			}
+		}
+		if !found {
+			fmt.Printf("Could not find %s %s\n", nm[0], nm[1])
+		}
+		errcheck(rows.Err())
+	}
 }
 
 // FixDate deals with changing dates from the format
@@ -420,25 +522,45 @@ func LoadDepartments(db *sql.DB) {
 	errcheck(err)
 
 }
+func strToInt(s string) int {
+	if len(s) == 0 {
+		return 0
+	}
+	s = strings.Trim(s, " \n\r")
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		fmt.Printf("Error converting %s to a number: %v\n", s, err)
+		return 0
+	}
+	return n
+}
 
 // LoadCompanies reads companies.csv and initializes the companies table
 func LoadCompanies(db *sql.DB) {
 	//--------------------------------------------------------------------------
 	// Populate the companies table
 	//--------------------------------------------------------------------------
-	InsertJT, err := db.Prepare("INSERT INTO companies (name,address,address2,city,state,postalcode,country,phone,fax,email,designation) VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+	InsertJT, err := db.Prepare("INSERT INTO companies (LegalName,CommonName,address,address2,city,state,postalcode,country,phone,fax,email,designation,Active,EmploysPersonnel) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 	errcheck(err)
 	filename := "sql/companies.csv"
 	f, err := os.Open(filename)
 	errcheck(err)
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		da := strings.Split(line, ",")
+
+	reader := csv.NewReader(f)
+	reader.FieldsPerRecord = -1
+	rawCSVdata, err := reader.ReadAll()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	// sanity check, display to standard output
+	for _, da := range rawCSVdata {
 		for i := 0; i < len(da); i++ {
 			da[i] = strings.Trim(da[i], " \n\r")
 		}
-		_, err := InsertJT.Exec(da[0], da[1], da[2], da[3], da[4], da[5], da[6], da[7], da[8], da[9], da[10])
+		fmt.Printf("da[0]=\"%s\", da[1]=\"%s\", da[3]=\"%s\", da[4]=\"%s\"\n", da[0], da[1], da[2], da[3])
+		_, err := InsertJT.Exec(da[0], da[1], da[2], da[3], da[4], da[5], da[6], da[7], da[8], da[9], da[10], da[11], strToInt(da[12]), strToInt(da[13]))
 		errcheck(err)
 	}
 	//--------------------------------------------------------------------------
@@ -447,7 +569,7 @@ func LoadCompanies(db *sql.DB) {
 	comap := make(map[string]int)
 	var name string
 	var cocode int
-	rows, err := db.Query("select cocode,name from companies")
+	rows, err := db.Query("select cocode,CommonName from companies")
 	errcheck(err)
 	defer rows.Close()
 	for rows.Next() {

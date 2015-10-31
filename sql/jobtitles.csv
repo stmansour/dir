@@ -1,4 +1,5 @@
 Accounting Assistant,Administrative
+Accounting Associate,Administrative
 Accounting Manager,Administrative
 Administrative Assistant,Administrative
 Assistant Manager,Administrative
@@ -20,6 +21,7 @@ Call Center Manager,Call Center
 Courtesy Patrol Driver,Courtesy Patrol
 Courtesy Patrol Manager,Courtesy Patrol
 Courtesy Patrol Officer,Courtesy Patrol
+Courtesy Patrol Supervisor,Courtesy Patrol
 Designer,Development
 Creative Director,Development
 Development Coordinator,Development
@@ -32,7 +34,7 @@ Fitness Center Attendant,Fitness Center
 Fitness Center Manager,Fitness Center
 Food and Beverage Manager,Fitness Center
 Executive Chef,Food & Beverage
-Food and Beverage Associate,Food & Beverage
+Food & Bev Associate,Food & Beverage
 Bar Manager,Food & Beverage
 Bartender,Food & Beverage
 Host,Food & Beverage
@@ -45,12 +47,15 @@ Housekeeping Manager,Housekeeping
 Housekeeping Supervisor,Housekeeping
 Common Area Housekeeper,Housekeeping
 Laundry Associate,Housekeeping
+Laundry Attendant,Housekeeping
 Serviced Apt Housekeeper,Housekeeping
+Svc Apt Housekeeping Associate,Housekeeping
 Traditional Apt Housekeeper,Housekeeping
 Grounds Associate,Landscaping
 Grounds Supervisor,Landscaping
-Maintanence Associate,Maintenance
+Maintenance Associate,Maintenance
 Maintenance Manager,Maintenance
+Maintenance Supervisor,Maintenance
 Makeready Associate,Maintenance
 Cap Improvement Associate,Maintenance
 Cap Improvement Supervisor,Maintenance
@@ -58,7 +63,7 @@ Customer Service Associate,Sales
 Customer Service Manager,Sales
 Product Sales Associate,Sales
 Product Sales Manager,Sales
-National Accts Manager,Sales
+National Accounts Manager,Sales
 Leasing Associate,Trad Apt Sales
 Leasing Manager,Trad Apt Sales
 Packer,Warehouse
@@ -67,4 +72,11 @@ Seasonal Associate,Warehouse
 Checker,Warehouse
 Warehouse Associate,Warehouse
 Warehouse Manager,Warehouse
+Warehouse Supervisor,Warehouse
+Retail Clerk,
+Store Manager,
+Asst Store Manager,
+Traditional Apt Housekeeping Assoc,Housekeeping
+Makeready Technician,
+Serviced Apt Sales Associate,
 Unknown,
