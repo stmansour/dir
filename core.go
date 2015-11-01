@@ -366,6 +366,13 @@ func FixBirthday(db *sql.DB) {
 	}
 	errcheck(rows.Err())
 
+	//=================================
+	// now remove the string column...
+	//=================================
+	RemoveCol, err := db.Prepare("alter table people drop column Birthdate")
+	errcheck(err)
+	_, err = RemoveCol.Exec()
+	errcheck(err)
 }
 
 func findUID(db *sql.DB, first string, last string) int {
