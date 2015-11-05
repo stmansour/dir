@@ -190,6 +190,31 @@ func fix401K(db *sql.DB) {
 	errcheck(err)
 }
 
+func addUsernamePassword(db *sql.DB) {
+	colAdd, err := db.Prepare("ALTER TABLE people ADD COLUMN username VARCHAR(20)")
+	_, err = colAdd.Exec()
+	errcheck(err)
+	colAdd, err = db.Prepare("ALTER TABLE people ADD COLUMN passhash CHAR(128)")
+	_, err = colAdd.Exec()
+	errcheck(err)
+
+	rows, err := db.Query("select uid from people")
+	errcheck(err)
+	defer rows.Close()
+
+	var uid int
+	blank := ""
+	for rows.Next() {
+		errcheck(rows.Scan(&uid))
+		update, err := db.Prepare("Update people set username=?,passhash=? where people.uid=?")
+		errcheck(err)
+		_, err = update.Exec(blank, blank, uid)
+		errcheck(err)
+	}
+	errcheck(rows.Err())
+
+}
+
 func main() {
 	db, err := sql.Open("mysql", "sman:@/accord?charset=utf8&parseTime=True")
 	if nil != err {
@@ -218,4 +243,6 @@ func main() {
 	fixDentalInsurance(db)
 	fix401K(db)
 	UpdateJobTitles(db)
+	fixReviewDates(db)
+	addUsernamePassword(db)
 }

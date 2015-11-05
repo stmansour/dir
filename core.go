@@ -302,6 +302,43 @@ func FixDate(db *sql.DB, column string) {
 	}
 }
 
+func fixReviewDates(db *sql.DB) {
+	//--------------------------------------------
+	// Now remove the Hire column completely..
+	//--------------------------------------------
+	RemoveCol, err := db.Prepare("alter table people drop column LastReview")
+	errcheck(err)
+	_, err = RemoveCol.Exec()
+	errcheck(err)
+
+	RemoveCol, err = db.Prepare("alter table people drop column NextReview")
+	errcheck(err)
+	_, err = RemoveCol.Exec()
+	errcheck(err)
+
+	//--------------------------------------------
+	// Add a Hire column back in as a Date...
+	//--------------------------------------------
+	AddCol, err := db.Prepare("ALTER TABLE people add column LastReview date")
+	errcheck(err)
+	_, err = AddCol.Exec()
+	errcheck(err)
+
+	AddCol, err = db.Prepare("ALTER TABLE people add column NextReview date")
+	errcheck(err)
+	_, err = AddCol.Exec()
+	errcheck(err)
+
+	//--------------------------------------------
+	// Now add the date that we saved earlier for each UID
+	//--------------------------------------------
+	dt := fmt.Sprintf("%04d/%02d/%02d", 0, 0, 0)
+	DateUpdate, err := db.Prepare(fmt.Sprintf("Update people set LastReview=?,NextReview=?"))
+	errcheck(err)
+	_, err = DateUpdate.Exec(dt, dt)
+	errcheck(err)
+}
+
 // FixBirthday changes the "birthdate" string from it's present form (multiple formats)
 // to two fields - birthMonth, birthDOM
 func FixBirthday(db *sql.DB) {

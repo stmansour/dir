@@ -7,3 +7,4 @@ obfuscate:
 	go vet
 	golint
 	go build
+

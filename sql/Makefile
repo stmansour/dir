@@ -1,6 +1,7 @@
 all: clean
 	./initpeople.sh
-	mysql <dir.sql >dbcreate.log 2>&1
+	mysql <dir.sql
+	#mysql <dir.sql >dbcreate.log 2>&1
 
 clean:
 	rm -f initpeople.sql dbcreate.log

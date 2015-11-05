@@ -94,3 +94,10 @@ CREATE TABLE DeductionList (
     dcode MEDIUMINT NOT NULL,
     name VARCHAR(25)
 );
+
+
+-- CREATE TABLE login (
+--     name VARCHAR(25),
+--     createtime DATETIME,
+--     passhash BINARY(64)
+-- );
