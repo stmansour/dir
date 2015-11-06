@@ -3,6 +3,7 @@
 package main
 
 import (
+	"crypto/sha512"
 	"database/sql"
 	"fmt"
 	"log"
@@ -198,21 +199,47 @@ func addUsernamePassword(db *sql.DB) {
 	_, err = colAdd.Exec()
 	errcheck(err)
 
-	rows, err := db.Query("select uid from people")
+	rows, err := db.Query("select uid,firstname,lastname from people")
 	errcheck(err)
 	defer rows.Close()
 
 	var uid int
-	blank := ""
+	var firstname, lastname, u string
+	var users map[string]int
+
+	password := []byte("accord")
+	sha := sha512.Sum512(password)
+	mypasshash := fmt.Sprintf("%x", sha)
+	users = make(map[string]int, 0)
+
 	for rows.Next() {
-		errcheck(rows.Scan(&uid))
+		errcheck(rows.Scan(&uid, &firstname, &lastname))
 		update, err := db.Prepare("Update people set username=?,passhash=? where people.uid=?")
 		errcheck(err)
-		_, err = update.Exec(blank, blank, uid)
+		lastname = strings.TrimSpace(lastname)
+		if strings.ContainsAny(lastname, " -") {
+			ln := strings.Split(lastname, " ")
+			lastname = ln[0]
+			ln = strings.Split(lastname, "-")
+			lastname = ln[0]
+		}
+		username := strings.ToLower(fmt.Sprintf("%s%s", firstname[0:1], lastname))
+
+		if len(users) > 0 {
+			_, exists := users[username]
+			if exists {
+				for i := 1; exists && i < 100; i++ {
+					u = fmt.Sprintf("%s%d", username, i)
+					_, exists = users[u]
+				}
+				username = u
+			}
+		}
+		users[username] = uid
+		_, err = update.Exec(username, mypasshash, uid)
 		errcheck(err)
 	}
 	errcheck(rows.Err())
-
 }
 
 func main() {
