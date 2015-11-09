@@ -241,6 +241,81 @@ func addUsernamePassword(db *sql.DB) {
 	}
 	errcheck(rows.Err())
 }
+func fixClass(db *sql.DB) {
+	var class string
+	var uid int
+	rows, err := db.Query("select uid,class from people")
+	update, err := db.Prepare("Update people set class=? where people.uid=?")
+	errcheck(err)
+
+	var c map[string]int
+	c = make(map[string]int)
+	defer rows.Close()
+	for rows.Next() {
+		errcheck(rows.Scan(&uid, &class))
+		if len(class) > 0 {
+			class = class[3:6]
+			_, err = update.Exec(class, uid)
+			errcheck(err)
+			c[class] = 0
+		}
+	}
+	errcheck(rows.Err())
+
+	insert, err := db.Prepare("INSERT INTO classes (designation,name,description) VALUES(?,?,?)")
+	errcheck(err)
+	blank := ""
+	for class := range c {
+		if len(class) > 0 {
+			_, err = insert.Exec(class, blank, blank)
+			errcheck(err)
+		}
+	}
+
+	// now update the map with the classcode info
+	var classcode int
+	rows, err = db.Query("select classcode,designation from classes")
+	errcheck(err)
+	defer rows.Close()
+	for rows.Next() {
+		errcheck(rows.Scan(&classcode, &class))
+		if len(class) > 0 {
+			c[class] = classcode
+			fmt.Printf("c[%s] = %d\n", class, classcode)
+		}
+	}
+	errcheck(rows.Err())
+
+	//--------------------------------------------------------------------------
+	// add classcode and fill it out
+	//--------------------------------------------------------------------------
+	errcheck(err)
+	colAdd, err := db.Prepare("ALTER TABLE people ADD COLUMN classcode SMALLINT NOT NULL")
+	_, err = colAdd.Exec()
+	errcheck(err)
+	update, err = db.Prepare("Update people set classcode=? where people.uid=?")
+	errcheck(err)
+
+	rows, err = db.Query("select uid,class from people")
+	errcheck(err)
+	defer rows.Close()
+	for rows.Next() {
+		errcheck(rows.Scan(&uid, &class))
+		if len(class) == 0 {
+			classcode = 0
+		} else {
+			classcode = c[class]
+		}
+		update.Exec(classcode, uid)
+		errcheck(err)
+	}
+	errcheck(rows.Err())
+
+	RemoveCol, err := db.Prepare("alter table people drop column Class")
+	errcheck(err)
+	_, err = RemoveCol.Exec()
+	errcheck(err)
+}
 
 func main() {
 	db, err := sql.Open("mysql", "sman:@/accord?charset=utf8&parseTime=True")
@@ -272,4 +347,5 @@ func main() {
 	UpdateJobTitles(db)
 	fixReviewDates(db)
 	addUsernamePassword(db)
+	fixClass(db)
 }

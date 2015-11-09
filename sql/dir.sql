@@ -96,8 +96,10 @@ CREATE TABLE DeductionList (
 );
 
 
--- CREATE TABLE login (
---     name VARCHAR(25),
---     createtime DATETIME,
---     passhash BINARY(64)
--- );
+CREATE TABLE classes (
+    ClassCode MEDIUMINT NOT NULL AUTO_INCREMENT,
+    Name VARCHAR(25),
+    Designation CHAR(3) NOT NULL,
+    Description VARCHAR(256),
+    PRIMARY KEY (ClassCode)
+);
