@@ -6,5 +6,5 @@ DBfile=$2
 
 echo "DROP DATABASE IF EXISTS ${DB}; CREATE DATABASE ${DB}; USE ${DB};" > restore.sql
 echo "source ${DBfile}" >> restore.sql
-echo "GRANT ALL PRIVILEGES ON Accord TO 'ec2-user'@'localhost';" >> restore.sql
+echo "GRANT ALL PRIVILEGES ON accord TO 'ec2-user'@'localhost' WITH GRANT OPTION;" >> restore.sql
 mysql < restore.sql

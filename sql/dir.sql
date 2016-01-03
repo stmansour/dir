@@ -103,3 +103,17 @@ CREATE TABLE classes (
     Description VARCHAR(256),
     PRIMARY KEY (ClassCode)
 );
+
+CREATE TABLE secRole (
+    RID MEDIUMINT NOT NULL AUTO_INCREMENT,
+    Name VARCHAR(25),
+    Descr VARCHAR(512)
+);
+
+CREATE TABLE fieldPerms (
+    RID MEDIUMINT NOT NULL,
+    Elem MEDIUMINT NOT NULL,
+    Field VARCHAR(25) NOT NULL,
+    Perm MEDIUMINT NOT NULL,
+    Descr VARCHAR(256)
+);
