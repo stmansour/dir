@@ -6,7 +6,6 @@ clean:
 	rm -f dir
 
 dir:
-	go vet
 	golint
 	go build
 

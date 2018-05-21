@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"strings"
 )
 import _ "github.com/go-sql-driver/mysql"
@@ -15,6 +16,7 @@ var titlemap map[string]int
 
 func errcheck(err error) {
 	if err != nil {
+		debug.PrintStack()
 		log.Fatal(err)
 	}
 }
